@@ -1,8 +1,10 @@
 #include <assert.h>
+#include <stdio.h>
 #include "stdlib.h"
 #include "stdbool.h"
 
-#define MAX_CALLS (100000)
+#define MAX_CALLS (10000)
+#define TOMBSTONE (-2)
 #define EMPTY (-1)
 
 // This HashSet will resolve collisions via linear probing
@@ -13,19 +15,6 @@ typedef struct{
     int len;
     int n;
 } MyHashSet;
-
-bool myHashSetContains(MyHashSet* obj, int key);
-void myHashSetRemove(MyHashSet* obj, int key);
-void myHashSetAdd(MyHashSet* obj, int key);
-
-void increment(int* input, int len){
-    if(*input == len - 1){
-        *input = 0;
-    } else {
-        (*input)++;
-    }
-}
-
 
 MyHashSet* myHashSetCreate() {
     MyHashSet *obj = malloc(sizeof(*obj));
@@ -50,8 +39,12 @@ MyHashSet* myHashSetCreate() {
     return obj;
 }
 
-int hash(int key){ // Super basic hash function to begin
-    return key % MAX_CALLS;
+bool myHashSetContains(MyHashSet* obj, int key) {
+    int hashed = key % MAX_CALLS, i;
+
+    for(i = 0; i < MAX_CALLS && obj->table[(hashed + i) % MAX_CALLS] != EMPTY && obj->table[(hashed + i) % MAX_CALLS] != key; i++);
+
+    return (obj->table[(hashed + i) % MAX_CALLS] == key);
 }
 
 void myHashSetAdd(MyHashSet* obj, int key) {
@@ -59,13 +52,13 @@ void myHashSetAdd(MyHashSet* obj, int key) {
         return;
     }
 
-    int hashed = hash(key); // Cannot fully cycle back due to previous condition
+    int hashed = key % MAX_CALLS, i;
 
-    while(obj->table[hashed] != EMPTY){
-        increment(&hashed, obj->len);
+    for(i = 0; i < MAX_CALLS && obj->table[(hashed + i) % MAX_CALLS] != EMPTY; i++){
+        printf("%d", i);
     }
 
-    obj->table[hashed] = key;
+    obj->table[(hashed + i) % MAX_CALLS] = key;
     obj->n++;
 }
 
@@ -74,26 +67,12 @@ void myHashSetRemove(MyHashSet* obj, int key) {
         return;
     }
 
-    int hashed = hash(key); // Cannot fully cycle back due to previous condition
+    int hashed = key % MAX_CALLS, i;
 
-    while(obj->table[hashed] != key){
-        increment(&hashed, obj->len);
-    }
+    for(i = 0; i < MAX_CALLS && obj->table[(hashed + i) % MAX_CALLS] != key; i++);
 
-    obj->table[hashed] = EMPTY;
+    obj->table[(hashed + i) % MAX_CALLS] = TOMBSTONE;
     obj->n--;
-}
-
-bool myHashSetContains(MyHashSet* obj, int key) {
-    int hashed = hash(key), cursor = hashed;
-    bool first_slot = true;
-
-    while(obj->table[cursor] != EMPTY && obj->table[cursor] != key && (hashed != cursor || first_slot)){
-        first_slot = false;
-        increment(&cursor, obj->len);
-    }
-
-    return (obj->table[cursor] == key);
 }
 
 void myHashSetFree(MyHashSet* obj) {
@@ -106,10 +85,13 @@ int main(void){
 
     myHashSetAdd(obj, 1);
     myHashSetAdd(obj, 2);
+    myHashSetAdd(obj, 5);
+    myHashSetAdd(obj, 4);
     assert(myHashSetContains(obj, 1));
     assert(!myHashSetContains(obj, 3));
     myHashSetAdd(obj, 2);
     myHashSetRemove(obj, 2);
+    myHashSetRemove(obj, 5);
     assert(!myHashSetContains(obj, 2));
 
     myHashSetFree(obj);
