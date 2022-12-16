@@ -1,56 +1,46 @@
 class UndergroundSystem:
 
     def __init__(self):
-        self.customers = {}
-        self.averages = {}
+        self.startTimes = {}
+        self.startStations = {}
+        self.total_durations = {}
+        self.counts = {}
 
-    def checkIn(self, id: int, stationName: str, t: int) -> None:
-        if id in self.customers:
+    def check_in(self, customer_id: int, station_name: str, t: int) -> None:
+        if customer_id not in self.startTimes:
+            self.startTimes[customer_id] = t
+            self.startStations[customer_id] = station_name
+
+    def check_out(self, customer_id: int, station_name: str, t: int) -> None:
+        if customer_id not in self.startTimes:
             return
 
-        self.customers[id] = {"startStationName": stationName, "startStationTime": t}
+        key = (self.startStations[customer_id], station_name)
 
-    def checkOut(self, id: int, stationName: str, t: int) -> None:
-        if id not in self.customers:
-            return
-
-        total_time = t - self.customers[id]["startStationTime"]
-        concat_str = self.customers[id]["startStationName"] + "->" + stationName
-
-        if concat_str in self.averages:
-            self.averages[concat_str]["totalTime"] += total_time
-            self.averages[concat_str]["totalOccurrences"] += 1
+        if key in self.total_durations:
+            self.total_durations[key] += t - self.startTimes[customer_id]
+            self.counts[key] += 1
         else:
-            self.averages[concat_str] = {"totalTime": total_time, "totalOccurrences": 1}
+            self.total_durations[key] = t - self.startTimes[customer_id]
+            self.counts[key] = 1
 
-        del self.customers[id]
+        del self.startStations[customer_id], self.startTimes[customer_id]
 
-    def getAverageTime(self, startStation: str, endStation: str) -> float:
-        concat_str = startStation + "->" + endStation
-        total_time = self.averages[concat_str]["totalTime"]
-        total_occurrences = self.averages[concat_str]["totalOccurrences"]
-
-        return total_time / total_occurrences
+    def get_average_time(self, start_station: str, end_station: str) -> float:
+        return self.total_durations[(start_station, end_station)] / self.counts[(start_station, end_station)]
 
 
 if __name__ == '__main__':
     obj = UndergroundSystem()
-    obj.checkIn(45, "Leyton", 3)
-    obj.checkIn(32, "Paradise", 8)
-    obj.checkIn(27, "Leyton", 10)
-    obj.checkOut(45, "Waterloo", 15)
-    obj.checkOut(27, "Waterloo", 20)
-    obj.checkOut(32, "Cambridge", 22)
-    print(obj.getAverageTime("Paradise", "Cambridge"))
-    print(obj.getAverageTime("Leyton", "Waterloo"))
-    obj.checkIn(10, "Leyton", 24)
-    print(obj.getAverageTime("Leyton", "Waterloo"))
-    obj.checkOut(10, "Waterloo", 38)
-    print(obj.getAverageTime("Leyton", "Waterloo"))
-
-
-# Your UndergroundSystem object will be instantiated and called as such:
-# obj = UndergroundSystem()
-# obj.checkIn(id,stationName,t)
-# obj.checkOut(id,stationName,t)
-# param_3 = obj.getAverageTime(startStation,endStation)
+    obj.check_in(45, "Leyton", 3)
+    obj.check_in(32, "Paradise", 8)
+    obj.check_in(27, "Leyton", 10)
+    obj.check_out(45, "Waterloo", 15)
+    obj.check_out(27, "Waterloo", 20)
+    obj.check_out(32, "Cambridge", 22)
+    print(obj.get_average_time("Paradise", "Cambridge"))
+    print(obj.get_average_time("Leyton", "Waterloo"))
+    obj.check_in(10, "Leyton", 24)
+    print(obj.get_average_time("Leyton", "Waterloo"))
+    obj.check_out(10, "Waterloo", 38)
+    print(obj.get_average_time("Leyton", "Waterloo"))
