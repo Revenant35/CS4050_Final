@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include "stdlib.h"
 #include "stdbool.h"
 
@@ -54,9 +53,7 @@ void myHashSetAdd(MyHashSet* obj, int key) {
 
     int hashed = key % MAX_CALLS, i;
 
-    for(i = 0; i < MAX_CALLS && obj->table[(hashed + i) % MAX_CALLS] != EMPTY; i++){
-        printf("%d", i);
-    }
+    for(i = 0; i < MAX_CALLS && obj->table[(hashed + i) % MAX_CALLS] != EMPTY; i++);
 
     obj->table[(hashed + i) % MAX_CALLS] = key;
     obj->n++;
